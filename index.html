@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Longevity habits — one reminder at a time</title>
+<meta name="description" content="Bryan Johnson's longevity habits as a new-tab reminder. Pull one into focus, or read them all." />
+<link rel="canonical" href="https://sultanpeyek.github.io/bryan-johnson-longevity/" />
+
+<!-- favicon: Bryan's avatar -->
+<link rel="icon" type="image/jpeg" href="avatar.jpg" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+
+<!-- Open Graph / Twitter card -->
+<!-- og.png cache-bust: bump ?v= to today's date (YYYYMMDD) on EVERY change to og.png — scrapers cache by URL -->
+
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://sultanpeyek.github.io/bryan-johnson-longevity/" />
+<meta property="og:title" content="Longevity habits — one reminder at a time" />
+<meta property="og:description" content="Bryan Johnson's habits, one pulled into focus each new tab." />
+<meta property="og:image" content="https://sultanpeyek.github.io/bryan-johnson-longevity/og.png?v=20260616" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Longevity habits — one reminder at a time" />
+<meta name="twitter:description" content="Bryan Johnson's habits, one pulled into focus each new tab." />
+<meta name="twitter:image" content="https://sultanpeyek.github.io/bryan-johnson-longevity/og.png?v=20260616" />
+
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Longevity" />
+<!-- set theme before paint to avoid a flash -->
+<script>(function(){try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<style>
+  :root {
+    --ink: #0f1419;
+    --muted: #536471;
+    --line: #eff3f4;
+    --blue: #2b8fe0;          /* accent */
+    --bg: #ffffff;            /* card surface */
+    --page: #f7f9f9;          /* page backdrop */
+    --hover: #f7f9f9;
+    --focus-bg: #e8f3fc;
+    --focus-ring: rgba(43,143,224,.28);
+    --ctl: rgba(255,255,255,.82);
+    --ctl-2: #eff3f4;
+    --ctl-2-hover: #e2e8ea;
+    --ink-hover: #272c30;
+    /* Emil curves */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /* lights-out dark theme (toggled via data-theme on <html>) */
+  [data-theme="dark"] {
+    --ink: #e7e9ea;
+    --muted: #8b98a5;
+    --line: #2f3336;
+    --blue: #4aa6ee;
+    --bg: #16181c;
+    --page: #000000;
+    --hover: #1c2026;
+    --focus-bg: rgba(74,166,238,.16);
+    --focus-ring: rgba(74,166,238,.42);
+    --ctl: rgba(22,24,28,.82);
+    --ctl-2: #2a2e33;
+    --ctl-2-hover: #353a40;
+    --ink-hover: #d9dbdd;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100svh; overflow: hidden; background: var(--page); touch-action: manipulation; }
+  body { color-scheme: light dark; }
+
+  /* keyboard focus rings (no focus state existed before) */
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ---- stage: the fixed viewport we zoom inside ---- */
+  .stage {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    display: block;
+    /* subtle vignette so blurred edges read as depth */
+    background:
+      radial-gradient(120% 90% at 50% 0%, #ffffff 0%, #f7f9f9 60%, #eaeef0 100%);
+  }
+  [data-theme="dark"] .stage {
+    background:
+      radial-gradient(120% 90% at 50% 0%, #1a1d22 0%, #0a0b0d 55%, #000 100%);
+  }
+
+  /* the tweet card; transform is driven entirely by JS */
+  .feed {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 460px;
+    max-width: 92vw;
+    margin-left: 0;
+    transform-origin: 50% 0;
+    transform: translateX(-50%) scale(1);
+    will-change: transform;
+    transition: transform 440ms var(--ease-drawer);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .feed { transition: transform 160ms ease; }
+  }
+
+  .card {
+    background: var(--bg);
+    padding: 16px 18px 22px;
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  [data-theme="dark"] .card { box-shadow: 0 0 0 1px var(--line); }
+
+  /* ---- tweet header ---- */
+  .head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%; flex: none;
+    object-fit: cover; display: block;
+    background: #e1e8ed;
+  }
+  .who { line-height: 1.2; }
+  .name { font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 3px; }
+  .badge { width: 18px; height: 18px; fill: var(--blue); }
+  .handle { color: var(--muted); font-size: 15px; }
+
+  /* ---- tweet body ---- */
+  .body { font-size: 15px; line-height: 1.45; letter-spacing: -0.003em; }
+  @media (max-width: 480px) { .body { font-size: 16px; } }
+  .body p { margin: 0 0 14px; white-space: pre-wrap; }
+  .body p:last-child { margin-bottom: 0; }
+
+  .list { list-style: none; margin: 0 0 14px; }
+  .point {
+    display: block;
+    padding: 1px 8px;
+    margin: 0 -8px;
+    border-radius: 9px;
+    line-height: 1.45;
+    cursor: pointer;
+    transition:
+      filter 240ms var(--ease-out),
+      opacity 240ms var(--ease-out),
+      background-color 160ms ease,
+      color 160ms ease;
+    /* hint so blur compositing is cheap */
+    will-change: filter, opacity;
+  }
+  .point .n { color: var(--muted); }
+
+  /* header + closing lines are zoomable too */
+  .pick {
+    cursor: pointer;
+    border-radius: 9px;
+    padding: 4px 8px;
+    transition: filter 240ms var(--ease-out), opacity 240ms var(--ease-out), background-color 160ms ease;
+    will-change: filter, opacity;
+  }
+  /* negative margin must out-specify `.body p`, else the 8px padding indents the text */
+  .head.pick, .body p.pick { margin-left: -8px; margin-right: -8px; }
+  @media (hover: hover) and (pointer: fine) {
+    .pick:hover, .point:hover { background: var(--hover); }
+  }
+
+  /* initial staggered reveal — the whole card, header included */
+  .point, .body p, .head {
+    opacity: 0;
+    transform: translateY(6px);
+    animation: rise 360ms var(--ease-out) forwards;
+  }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .point, .body p, .head { animation: none; opacity: 1; transform: none; }
+  }
+
+  /* ---- focus mode: everything but .focused blurs back ---- */
+  .focus-mode .point:not(.focused),
+  .focus-mode .body p:not(.focused),
+  .focus-mode .head:not(.focused) {
+    filter: blur(3px);
+    opacity: .32;
+    pointer-events: none;
+  }
+  /* the active line stays crisp + tinted; the fixed glass lens (below) is the visible frame.
+     the lens is the SOLE selection box — kill any inner hover/background fill so it doesn't
+     paint a smaller nested rect (different width/radius) inside the lens. */
+  .focus-mode .focused { background: transparent; border-radius: 0; }
+  @media (hover: hover) and (pointer: fine) {
+    .focus-mode .point:hover, .focus-mode .pick:hover { background: transparent; }
+  }
+  .focus-mode .point.focused { color: var(--blue); }
+  .focus-mode .point.focused .n { color: var(--blue); }
+
+  /* fixed Liquid-Glass selection lens: the card scrolls behind it; the line inside it is active.
+     no backdrop blur — the active line must stay legible; lensing is faked with saturate/brightness
+     + a specular top edge so it reads as glass without smearing the text underneath. */
+  .lens {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 300px; height: 56px;             /* JS resizes to hug the active line */
+    transform: translate(-50%, -50%) scale(.96);
+    border-radius: 16px;
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.04));
+    -webkit-backdrop-filter: saturate(1.5) brightness(1.05);
+    backdrop-filter: saturate(1.5) brightness(1.05);
+    border: 1px solid rgba(255,255,255,.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.6),
+      inset 0 -1px 1px rgba(255,255,255,.12),
+      0 10px 30px rgba(0,0,0,.16);
+    transition:
+      opacity 280ms var(--ease-out),
+      transform 280ms var(--ease-drawer),
+      width 220ms var(--ease-out),
+      height 220ms var(--ease-out);
+  }
+  [data-theme="dark"] .lens {
+    background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.02));
+    border-color: rgba(255,255,255,.16);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.24),
+      inset 0 -1px 1px rgba(255,255,255,.06),
+      0 12px 34px rgba(0,0,0,.5);
+  }
+  .focus-mode .lens { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  /* no blur/size-transition lag while the wheel is actively scrolling under the finger */
+  .dragging .point, .dragging .pick { transition: none; }
+  .dragging .lens { transition: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .lens { transition: opacity 160ms ease; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .focus-mode .point:not(.focused),
+    .focus-mode .body p:not(.focused),
+    .focus-mode .head:not(.focused) { filter: none; opacity: .25; }
+  }
+
+  /* ---- controls ---- */
+  .controls {
+    position: fixed;
+    left: 50%;
+    bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px));
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+    background: var(--ctl);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    padding: 7px;
+    border-radius: 999px;
+    box-shadow: 0 8px 30px rgba(15,20,25,.14), 0 0 0 1px rgba(15,20,25,.05);
+  }
+  .btn {
+    font: inherit; font-weight: 700; font-size: 14px;
+    border: 0; cursor: pointer; white-space: nowrap;
+    padding: 10px 18px; border-radius: 999px;
+    color: var(--bg); background: var(--ink);
+    transition: transform 140ms var(--ease-out), background-color 160ms ease, opacity 160ms ease;
+  }
+  .btn.secondary { background: var(--ctl-2); color: var(--ink); }
+  .btn:active { transform: scale(0.95); }
+  .btn:focus-visible { outline-offset: 3px; }
+  @media (hover: hover) and (pointer: fine) {
+    .btn:hover { background: var(--ink-hover); }
+    .btn.secondary:hover { background: var(--ctl-2-hover); }
+  }
+  .btn[disabled] { opacity: .4; cursor: default; transform: none; }
+
+  /* both buttons: icon + label */
+  .btn { display: inline-flex; align-items: center; gap: 7px; }
+  .dice { display: inline-block; }
+  .dice.rolling { animation: spin 380ms var(--ease-out); }
+  @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .dice.rolling { animation: none; } }
+
+  /* mobile: simplify to round 48px icon-only buttons (≥44px tap target) */
+  @media (max-width: 480px) {
+    .controls .btn { width: 48px; height: 48px; padding: 0; gap: 0; justify-content: center; }
+    .controls .label { display: none; }
+  }
+
+  /* tiny caption that names the picked point */
+  .caption {
+    position: fixed; left: 50%; top: max(16px, calc(env(safe-area-inset-top) + 12px));
+    transform: translate(-50%, -8px);
+    height: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--ink); color: var(--bg);
+    font-size: 13px; font-weight: 600; letter-spacing: .01em;
+    padding: 0 14px; border-radius: 999px;
+    opacity: 0; pointer-events: none; z-index: 10;
+    transition: opacity 240ms var(--ease-out), transform 240ms var(--ease-out);
+    box-shadow: 0 6px 22px rgba(15,20,25,.18), 0 0 0 1px rgba(15,20,25,.06);
+  }
+  .caption.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* link to the original X post */
+  .src {
+    position: fixed; z-index: 10;
+    right: max(14px, env(safe-area-inset-right));
+    top: max(14px, calc(env(safe-area-inset-top) + 12px));
+    height: 36px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    color: var(--muted);
+    background: var(--ctl);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    padding: 0 14px; border-radius: 999px;
+    box-shadow: 0 6px 22px rgba(15,20,25,.10), 0 0 0 1px rgba(15,20,25,.05);
+    transition: transform 140ms var(--ease-out), color 160ms ease;
+  }
+  .src:active { transform: scale(0.97); }
+  @media (hover: hover) and (pointer: fine) {
+    .src:hover { color: var(--ink); }
+  }
+  /* narrow phones: collapse .src to a 36px icon-only circle (matches .theme
+     and the .credit collapse) and rein in the centered .caption so it can never
+     reach the side controls. zero the bare "Original post" text node via
+     font-size:0; the fixed-size SVG keeps its dimensions. transform/opacity
+     only — no animated layout props, snappy easing preserved. */
+  @media (max-width: 480px) {
+    .src {
+      width: 36px; height: 36px; padding: 0; gap: 0;
+      justify-content: center; font-size: 0;
+    }
+    .src svg { width: 16px; height: 16px; }
+    .caption {
+      max-width: calc(100vw - 132px);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      padding: 7px 12px;
+    }
+  }
+
+  /* theme toggle (top-left) */
+  .theme {
+    position: fixed; z-index: 10;
+    left: max(14px, env(safe-area-inset-left));
+    top: max(14px, calc(env(safe-area-inset-top) + 12px));
+    width: 36px; height: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 0; cursor: pointer; color: var(--muted);
+    background: var(--ctl);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    border-radius: 999px;
+    box-shadow: 0 6px 22px rgba(15,20,25,.10), 0 0 0 1px rgba(15,20,25,.05);
+    transition: transform 140ms var(--ease-out), color 160ms ease;
+  }
+  .theme:active { transform: scale(0.94); }
+  @media (hover: hover) and (pointer: fine) { .theme:hover { color: var(--ink); } }
+  .theme .sun { display: none; }
+  .theme .moon { display: block; }
+  [data-theme="dark"] .theme .sun { display: block; }
+  [data-theme="dark"] .theme .moon { display: none; }
+
+  /* credit + disclaimer (bottom-left) */
+  .credit {
+    position: fixed; z-index: 10;
+    left: max(14px, env(safe-area-inset-left));
+    bottom: max(16px, calc(env(safe-area-inset-bottom) + 10px));
+    display: inline-flex; align-items: center; gap: 9px;
+    max-width: min(46vw, 300px);
+    background: var(--ctl);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    padding: 8px 13px 8px 11px; border-radius: 16px;
+    box-shadow: 0 6px 22px rgba(15,20,25,.10), 0 0 0 1px rgba(15,20,25,.05);
+  }
+  .credit .gh { display: inline-flex; color: var(--ink); flex: none; }
+  .credit .gh svg { width: 18px; height: 18px; }
+  .credit .txt { font-size: 11px; line-height: 1.35; color: var(--muted); }
+  .credit .txt a { color: var(--ink); font-weight: 700; text-decoration: none; }
+  @media (hover: hover) and (pointer: fine) { .credit .txt a:hover { text-decoration: underline; } }
+  .credit .dim { display: block; margin-top: 1px; opacity: .85; }
+  /* collapse to a single GitHub icon well before the expanded pill can reach the
+     centered controls (the text pill + control bar share the bottom band) */
+  @media (max-width: 1100px) {
+    .credit { padding: 0; width: 38px; height: 38px; justify-content: center; }
+    .credit .txt { display: none; }
+  }
+
+  /* ---- idle auto-hide ("sleep"): fade floating chrome after inactivity ---- */
+  /* GENTLE exit (opacity only), SNAPPY return. Never fades the .feed card. */
+  .controls, .src, .theme, .credit, .caption {
+    transition: opacity 640ms ease;
+  }
+  body.idle .controls,
+  body.idle .src,
+  body.idle .theme,
+  body.idle .credit,
+  body.idle .caption {
+    opacity: 0;
+    pointer-events: none;
+  }
+  /* RETURN is snappy: removing .idle uses the short ease-out curve */
+  body:not(.idle) .controls,
+  body:not(.idle) .src,
+  body:not(.idle) .theme,
+  body:not(.idle) .credit,
+  body:not(.idle) .credit {
+    transition: opacity 190ms var(--ease-out);
+  }
+  body:not(.idle) .theme { transition: opacity 190ms var(--ease-out), transform 140ms var(--ease-out), color 160ms ease; }
+  /* preserve each element's own richer transition on the snappy return */
+  body:not(.idle) .controls { transition: opacity 190ms var(--ease-out); }
+  body:not(.idle) .src { transition: opacity 190ms var(--ease-out), transform 140ms var(--ease-out), color 160ms ease; }
+  body:not(.idle) .caption.show { transition: opacity 190ms var(--ease-out), transform 240ms var(--ease-out); }
+  @media (prefers-reduced-motion: reduce) {
+    .controls, .src, .theme, .credit, .caption,
+    body:not(.idle) .controls, body:not(.idle) .src,
+    body:not(.idle) .theme, body:not(.idle) .credit,
+    body:not(.idle) .caption.show {
+      transition: opacity 120ms ease;
+    }
+  }
+</style>
+</head>
+<body>
+  <main class="stage" id="stage">
+    <article class="feed" id="feed">
+      <div class="card">
+        <div class="head pick" data-label="Bryan Johnson">
+          <img class="avatar" src="avatar.jpg" alt="Bryan Johnson" width="44" height="44"
+               onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 44%22&gt;&lt;rect width=%2244%22 height=%2244%22 fill=%22%23cfd9de%22/&gt;&lt;circle cx=%2222%22 cy=%2217%22 r=%228%22 fill=%22%23fff%22/&gt;&lt;path d=%22M8 40c0-7.7 6.3-13 14-13s14 5.3 14 13z%22 fill=%22%23fff%22/&gt;&lt;/svg&gt;'" />
+          <div class="who">
+            <div class="name">Bryan Johnson
+              <svg class="badge" viewBox="0 0 24 24" aria-label="Verified"><circle cx="12" cy="12" r="10"/><path d="M17.2 8.4 10.5 15l-3.7-3.6 1.3-1.4 2.4 2.3 5.4-5.3z" fill="#fff"/></svg>
+            </div>
+            <div class="handle">@bryan_johnson</div>
+          </div>
+        </div>
+
+        <div class="body">
+          <p class="pick" data-label="This is it">This is it.
+Everything learned spending millions on longevity.</p>
+
+          <p class="pick" data-label="From / To">From:    Your Immortal Unc and Auntie.
+To:        Our Immortal nieces and nephews.</p>
+
+          <ul class="list" id="list"></ul>
+
+          <p class="pick" data-label="Bonus">Bonus points if you get your blood checked.</p>
+          <p class="pick" data-label="Start here">Start here, it will change your life.</p>
+        </div>
+      </div>
+    </article>
+    <div class="lens" id="lens" aria-hidden="true"></div>
+  </main>
+
+  <a class="src" href="https://x.com/bryan_johnson/status/2054294779194982637" target="_blank" rel="noopener noreferrer" aria-label="View Bryan Johnson's original post">
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>
+    Original post
+  </a>
+
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+  </button>
+
+  <footer class="credit">
+    <a class="gh" href="https://github.com/sultanpeyek/bryan-johnson-longevity" target="_blank" rel="noopener noreferrer" aria-label="Source on GitHub — a personal project by @sultanpeyek, not affiliated with Bryan Johnson">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+    </a>
+    <div class="txt">
+      Personal project by <a href="https://github.com/sultanpeyek" target="_blank" rel="noopener noreferrer">@sultanpeyek</a> · <a href="https://github.com/sultanpeyek/bryan-johnson-longevity" target="_blank" rel="noopener noreferrer">GitHub&nbsp;↗</a>
+      <span class="dim">Unofficial — not affiliated with Bryan Johnson. Habits quoted from his public post.</span>
+    </div>
+  </footer>
+
+  <div class="caption" id="caption" aria-live="polite"></div>
+
+  <div class="controls">
+    <button class="btn" id="roll" aria-label="Pick another point"><svg class="dice" id="dice" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.8-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg><span class="label">Pick another</span></button>
+    <button class="btn secondary" id="all" aria-label="Show all points"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span class="label">Show all</span></button>
+  </div>
+
+<script>
+const POINTS = [
+  "Sleep is the world’s most powerful drug.",
+  "Be in your bed for 8 hours",
+  "Same bedtime every night, any time before midnight",
+  "Don’t eat right before bed",
+  "Calm foods for dinner",
+  "No screens 1 hour before bed",
+  "Avoid added sugar (be aware it’s in everything)",
+  "Avoid all things in an American convenience store",
+  "Avoid fried foods",
+  "Shoes off at the door",
+  "Eat whole foods, particularly veggies fruits nuts legumes berries",
+  "Walk a little after meals or air squats",
+  "Get your heart rate high routinely",
+  "Lift heavy things",
+  "Stretch daily",
+  "Water pik, floss, brush, tongue scrape, morning and night",
+  "Make an effort to drink water",
+  "Get sunlight when you wake up (UV is low)",
+  "Protect skin in midday sun",
+  "Stand up straight",
+  "See at least one friend once a week",
+  "Avoid plastic where you can (in all things)",
+  "Circulate air in rooms",
+  "When stressed, breathe, learn to calm your body",
+  "Go to the dentist",
+  "Avoid sitting for long times",
+  "Protect your hearing, the world is too loud",
+  "Alcohol is bad for you",
+  "Finish coffee before noon",
+  "Avoid bright lights after sunset",
+  "If obese, look into a GLP",
+  "Sleep in a cold room",
+  "Texting while driving is dangerous",
+  "Turn off all notifications",
+  "Limit social media use",
+  "Don’t smoke anything",
+  "If you struggle to sleep, read a physical book before bed",
+  "1 hour before bed have a calm wind down routine: bath, read, light walk, listen to music",
+  "The body is a clock and loves routine. Have a daily morning and evening schedule.",
+  "Avoid long distance travel where you can",
+  "Baby steps first: incorporate new things slowly",
+  "Do less… most things don’t work.",
+];
+
+const stage = document.getElementById('stage');
+const feed = document.getElementById('feed');
+const list = document.getElementById('list');
+const caption = document.getElementById('caption');
+const dice = document.getElementById('dice');
+const rollBtn = document.getElementById('roll');
+const allBtn = document.getElementById('all');
+const lens = document.getElementById('lens');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// build the list, stagger the reveal
+POINTS.forEach((txt, i) => {
+  const li = document.createElement('li');
+  li.className = 'point';
+  li.dataset.index = i;
+  li.innerHTML = '<span class="n">' + i + '.</span> ' + txt;
+  li.addEventListener('click', () => focusOn(i));
+  list.appendChild(li);
+});
+const items = [...list.children];
+
+// unified entrance: header → paragraphs → points → closing lines, in document order
+const revealEls = [document.querySelector('.head'), ...document.querySelectorAll('.body > p, .list .point')];
+revealEls.forEach((el, k) => el.style.animationDelay = (40 + k * 12) + 'ms');
+
+let current = -1, currentEl = null;
+const picks = [...document.querySelectorAll('.pick')];
+const focusables = [...items, ...picks];
+
+// arrow-key traversal walks the whole card in reading order:
+// header → "This is it" → From/To → points 0–41 → Bonus → "Start here" (document order)
+const navOrder = [...document.querySelectorAll('.pick, .point')];
+function labelFor(el) {
+  const pi = items.indexOf(el);
+  return pi >= 0 ? ('No. ' + pi + ' of ' + (POINTS.length - 1)) : el.dataset.label;
+}
+
+// --- transform math ----------------------------------------------------
+// feed is anchored top/center; we translateY + scale so a target point
+// lands in the stage's vertical center. transform-origin is 50% 0.
+function fitTransform() {
+  const stageH = stage.clientHeight;
+  const feedH = feed.offsetHeight;          // unscaled
+  const topPad = 24, botPad = 104;          // botPad reserves room for the floating controls
+  const avail = stageH - topPad - botPad;
+  const s = Math.min(1, avail / feedH);
+  const ty = topPad + Math.max(0, (avail - feedH * s) / 2);
+  return `translateX(-50%) translateY(${ty}px) scale(${s})`;
+}
+
+function focusTransform(el) {
+  const stageW = stage.clientWidth;
+  const stageH = stage.clientHeight;
+  const feedW = feed.offsetWidth;
+  // scale so the card uses ~96% of stage width — always fits horizontally (desktop
+  // hits the 2.8 cap for big text; mobile lands near 1.0, no horizontal clip).
+  const s = Math.min(2.8, (stageW * 0.96) / feedW);
+  const itemCenter = el.offsetTop + el.offsetHeight / 2;  // in feed coords
+  const ty = stageH / 2 - itemCenter * s;
+  return `translateX(-50%) translateY(${ty}px) scale(${s})`;
+}
+
+function showAll() {
+  document.body.classList.remove('focus-mode');
+  focusables.forEach(el => el.classList.remove('focused'));
+  current = -1; currentEl = null;
+  feed.style.transform = fitTransform();
+  caption.classList.remove('show');
+  allBtn.disabled = true;
+}
+
+// size the fixed lens to hug the active line at the current scale, clamped to the stage
+function sizeLens(el) {
+  const s = curScale();
+  lens.style.height = Math.min(stage.clientHeight - 24, el.offsetHeight * s + 12) + 'px';
+  lens.style.width  = Math.min(stage.clientWidth - 24, feed.offsetWidth * s - 20) + 'px';
+}
+
+// mark a line active WITHOUT moving the feed — used live while the wheel scrolls under the lens
+function setActive(el, label) {
+  if (el === currentEl) return;
+  focusables.forEach(e => e.classList.toggle('focused', e === el));
+  currentEl = el;
+  current = items.indexOf(el);               // point index, or -1 for header/closing lines
+  caption.textContent = label || '';
+  caption.classList.toggle('show', !!label);
+  sizeLens(el);
+}
+
+function focusEl(el, label) {
+  document.body.classList.add('focus-mode');
+  currentEl = null;                          // force setActive to apply (it skips no-ops)
+  setActive(el, label);
+  feed.style.transform = focusTransform(el); // snap the active line into the lens
+  allBtn.disabled = false;
+}
+
+function focusOn(i) {
+  focusEl(items[i], 'No. ' + i + ' of ' + (POINTS.length - 1));
+}
+
+// arrow/j/k navigation: step through the whole card in reading order, wrapping.
+// nothing focused yet → start at the header (navOrder[0]).
+function step(delta) {
+  const cur = navOrder.indexOf(currentEl);
+  const i = ((cur < 0 ? 0 : cur + delta) + navOrder.length) % navOrder.length;
+  focusEl(navOrder[i], labelFor(navOrder[i]));
+}
+
+// header + closing lines zoom on click too
+picks.forEach(el => el.addEventListener('click', e => {
+  e.stopPropagation();
+  focusEl(el, el.dataset.label);
+}));
+
+function roll() {
+  let i = Math.floor(Math.random() * POINTS.length);
+  if (POINTS.length > 1 && i === current) i = (i + 1) % POINTS.length; // never repeat
+  dice.classList.remove('rolling');
+  void dice.offsetWidth;            // restart the spin
+  dice.classList.add('rolling');
+  focusOn(i);
+}
+
+rollBtn.addEventListener('click', roll);
+allBtn.addEventListener('click', showAll);
+// click the dim backdrop to zoom back out
+stage.addEventListener('click', e => {
+  if (document.body.classList.contains('focus-mode') &&
+      !e.target.closest('.focused')) showAll();
+});
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') showAll();
+  else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); roll(); }
+  else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); step(1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); step(-1); }
+});
+
+// mobile: drag the card like an iOS picker. A vertical drag tracks the finger 1:1, rubber-bands
+// past the ends, and releases with velocity-projected momentum to settle on the nearest point
+// (Emil: live manipulation, flick velocity, friction at the boundary). A horizontal flick steps
+// prev/next; a sub-6px touch falls through to click so taps still focus a line.
+const curScale = () => Math.min(2.8, (stage.clientWidth * 0.96) / feed.offsetWidth);
+const tyFor = (el, s) => stage.clientHeight / 2 - (el.offsetTop + el.offsetHeight / 2) * s;
+// the line whose centered position is closest to the lens, for a given feed offset
+const nearestEl = (ty, s) =>
+  navOrder.reduce((b, el) => Math.abs(tyFor(el, s) - ty) < Math.abs(tyFor(b, s) - ty) ? el : b, navOrder[0]);
+
+let drag = null;
+stage.addEventListener('touchstart', e => {
+  if (e.touches.length !== 1 || !currentEl || !document.body.classList.contains('focus-mode')) return;
+  const t = e.touches[0], s = curScale();
+  drag = { x: t.clientX, y: t.clientY, ty0: tyFor(currentEl, s), s,
+           lastY: t.clientY, lastT: e.timeStamp, vy: 0, axis: null };
+  feed.style.transition = 'none';                       // the wheel follows the finger with no lag
+}, { passive: true });
+
+stage.addEventListener('touchmove', e => {
+  if (!drag || e.touches.length !== 1) return;
+  const t = e.touches[0], dx = t.clientX - drag.x, dy = t.clientY - drag.y;
+  if (!drag.axis && Math.max(Math.abs(dx), Math.abs(dy)) > 6) {
+    drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    if (drag.axis === 'y') document.body.classList.add('dragging');
+  }
+  if (drag.axis !== 'y') return;                        // horizontal → resolve on release
+  const s = drag.s;
+  const topTy = tyFor(navOrder[0], s), botTy = tyFor(navOrder[navOrder.length - 1], s);
+  let ty = drag.ty0 + dy;
+  if (ty > topTy) ty = topTy + (ty - topTy) * 0.3;      // friction past the first point
+  else if (ty < botTy) ty = botTy + (ty - botTy) * 0.3; // friction past the last point
+  const dt = e.timeStamp - drag.lastT;
+  if (dt > 0) drag.vy = (t.clientY - drag.lastY) / dt;  // px/ms, for the release flick
+  drag.lastY = t.clientY; drag.lastT = e.timeStamp;
+  feed.style.transform = `translateX(-50%) translateY(${ty}px) scale(${s})`;
+  const el = nearestEl(ty, s);                          // the line now under the fixed lens is active
+  setActive(el, labelFor(el));
+}, { passive: true });
+
+stage.addEventListener('touchend', e => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  document.body.classList.remove('dragging');
+  feed.style.transition = '';                           // restore the 440ms drawer spring
+  if (!d.axis) return;                                  // a tap → let click focus the line
+  if (d.axis === 'x') {                                 // horizontal flick → discrete step
+    step((e.changedTouches[0].clientX - d.x) < 0 ? 1 : -1);   // left = next
+    return;
+  }
+  const settled = d.ty0 + (d.lastY - d.y) + d.vy * 90;  // glide ~90ms past release
+  const el = nearestEl(settled, d.s);                   // commit the line the lens settled on
+  focusEl(el, labelFor(el));                            // snaps it exactly under the lens
+}, { passive: true });
+
+// block pinch / double-tap zoom — iOS Safari ignores the viewport user-scalable flag
+// ponytail: minimal gesture guards; covers iOS Safari + multi-touch browsers
+['gesturestart', 'gesturechange', 'gestureend'].forEach(t =>
+  addEventListener(t, e => e.preventDefault(), { passive: false }));
+addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+
+// --- idle auto-hide ("sleep"): fade floating chrome after ~2s of no activity ---
+// resetIdle() wakes the chrome instantly and re-arms the timer. We never arm while
+// the user is mid-drag (body.dragging) — only after the interaction settles.
+let idleTimer = null, pointerInEdge = false;
+const IDLE_MS = 2000;
+function resetIdle() {
+  document.body.classList.remove('idle');
+  if (idleTimer !== null) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    if (drag || pointerInEdge) { resetIdle(); return; }   // mid-drag or hovering a control band: don't sleep, re-arm
+    document.body.classList.add('idle');
+  }, IDLE_MS);
+}
+// ponytail: wake on deliberate input only — a still desktop reliably sleeps; a moving
+// cursor no longer counts as "activity" (it never let the chrome hide). touchmove keeps phone drags awake.
+['pointerdown', 'touchstart', 'keydown', 'wheel', 'touchmove'].forEach(t =>
+  addEventListener(t, resetIdle, { passive: true }));
+// desktop: hovering the top or bottom control band wakes the chrome and holds it awake
+// (mid-screen moves still let it sleep, as the original design intended).
+if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  const EDGE = 120;   // ponytail: covers the top theme/source row and the bottom control bar + credit
+  addEventListener('pointermove', e => {
+    pointerInEdge = e.clientY <= EDGE || e.clientY >= innerHeight - EDGE;
+    if (pointerInEdge) resetIdle();
+  }, { passive: true });
+}
+resetIdle();   // arm on boot
+
+// keep transforms correct on resize / rotate
+addEventListener('resize', () => {
+  if (currentEl) { feed.style.transform = focusTransform(currentEl); sizeLens(currentEl); }
+  else feed.style.transform = fitTransform();
+});
+
+// --- boot: show everything zoomed out, then zoom to a random point -----
+let bootTimer = null;
+function cancelAutoRoll() {
+  if (bootTimer !== null) { clearTimeout(bootTimer); bootTimer = null; }
+}
+// if the user picks/navigates before the intro auto-roll fires, void it — don't
+// yank them away from their choice. capture+once: first deliberate gesture wins.
+['pointerdown', 'keydown'].forEach(t =>
+  addEventListener(t, cancelAutoRoll, { capture: true, once: true }));
+
+function boot() {
+  feed.style.transition = 'none';
+  feed.style.transform = fitTransform();
+  allBtn.disabled = true;
+  void feed.offsetWidth;
+  feed.style.transition = '';            // restore CSS transition
+  // let the stagger play, then dive into a random pick (unless the user already acted)
+  bootTimer = setTimeout(() => { bootTimer = null; roll(); }, reduce ? 250 : 1000);
+}
+// wait a frame so offsetHeight reflects laid-out content
+requestAnimationFrame(() => requestAnimationFrame(boot));
+
+// theme toggle: head script set the initial value; here we just flip + remember.
+const themeBtn = document.getElementById('theme');
+const root = document.documentElement;
+themeBtn.addEventListener('click', () => {
+  const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  try { localStorage.setItem('theme', next); } catch (e) {}
+});
+// keep following the system until the user makes a manual choice
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  try { if (localStorage.getItem('theme')) return; } catch (_) {}
+  root.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+});
+
+// PWA: register SW so it installs and opens offline.
+// Self-updating: a newly deployed sw.js activates (skipWaiting+claim) → controllerchange → one reload.
+// No hard-refresh, no manual cache bump. hadController guard skips the reload on first-ever install.
+if ('serviceWorker' in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing || !hadController) return;   // first install: nothing to refresh
+    refreshing = true;
+    location.reload();
+  });
+  addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('sw.js');
+      addEventListener('focus', () => reg.update());   // pick up a deploy when the tab refocuses
+    } catch (e) {}
+  });
+}
+</script>
+</body>
+</html>

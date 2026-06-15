@@ -1,0 +1,16 @@
+{
+  "name": "Bryan Johnson — Longevity Advice",
+  "short_name": "Longevity",
+  "description": "A new-tab reminder for Bryan Johnson's longevity habits. Pull one into focus, or read them all.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f9f9",
+  "theme_color": "#0f1419",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

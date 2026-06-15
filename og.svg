@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0c1019"/>
+      <stop offset="1" stop-color="#05080e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+    <text x="80" y="248" font-size="72" font-weight="700" fill="#f7f9f9">Longevity habits —</text>
+    <text x="80" y="330" font-size="72" font-weight="700" fill="#f7f9f9">one reminder at a time</text>
+    <rect x="82" y="372" width="92" height="8" rx="4" fill="#1d9bf0"/>
+    <text x="80" y="452" font-size="32" fill="#8b98a5">Bryan Johnson's habits, one pulled into focus each new tab.</text>
+    <text x="80" y="582" font-size="24" fill="#5b6b7a">Personal project · @sultanpeyek · not affiliated with Bryan Johnson</text>
+  </g>
+</svg>
